@@ -1,9 +1,9 @@
 import Elysia from "elysia";
-import helmet from "elysiajs-helmet";
+import { elysiaHelmet } from "elysiajs-helmet";
 import { etag } from "@bogeychan/elysia-etag";
-import { compression } from "elysia-compress";
+import { compression } from "elysia-compression-bun";
 import { ip } from "elysia-ip";
-import { logger as logixlysia } from "logixlysia";
+import { logixlysia } from "logixlysia";
 
 
 /**
@@ -13,7 +13,7 @@ import { logger as logixlysia } from "logixlysia";
 export const plugins = new Elysia({ name: "allknower/plugins" })
     // Security headers
     .use(
-        (helmet as any)({
+        elysiaHelmet({
             contentSecurityPolicy: false, // Disabled — Scalar UI needs inline scripts
             crossOriginEmbedderPolicy: false,
         })
@@ -21,7 +21,7 @@ export const plugins = new Elysia({ name: "allknower/plugins" })
     // Automatic ETag caching headers on GET responses
     .use(etag())
     // Gzip/Brotli response compression — lore payloads can be large
-    .use(compression())
+    .use(compression({ threshold: 1024 }))
     // IP resolution — available in request context for logging and auth
     .use(ip())
     // Beautiful request logging with colors and timestamps

@@ -32,22 +32,22 @@ services:
   #
   # After first start, pull the model:
   #   docker exec allknower-ollama ollama pull nomic-embed-text
-  ollama:
-    image: ollama/ollama:latest
-    container_name: allknower-ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    # Uncomment if you have an NVIDIA GPU:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: allknower-ollama
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   # Uncomment if you have an NVIDIA GPU:
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: all
+  #   #           capabilities: [gpu]
 
 volumes:
   postgres_data:

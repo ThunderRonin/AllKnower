@@ -1,0 +1,54 @@
+# AllKnower — external services
+# AllKnower itself runs natively: bun dev
+# This file manages the services it depends on.
+#
+# Start:   docker compose up -d
+# Stop:    docker compose down
+# Wipe DB: docker compose down -v
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: allknower-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: allknower
+      POSTGRES_PASSWORD: allknower
+      POSTGRES_DB: allknower
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U allknower -d allknower"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Ollama ──────────────────────────────────────────────────────────────────
+  # Local embedding model (nomic-embed-text). Skip if you have Ollama installed
+  # natively or want to use the cloud embedding fallback only.
+  #
+  # After first start, pull the model:
+  #   docker exec allknower-ollama ollama pull nomic-embed-text
+  ollama:
+    image: ollama/ollama:latest
+    container_name: allknower-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Uncomment if you have an NVIDIA GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  postgres_data:
+  ollama_data:

@@ -21,7 +21,7 @@
         "better-auth": "^1.2.7",
         "@elysiajs/openapi": "^1.2.0",
         "elysiajs-helmet": "^1.0.0",
-        "@bogeychan/elysia-etag": "^0.0.10",
+        "@bogeychan/elysia-etag": "^0.1.0",
         "elysia-compress": "^1.0.0",
         "elysia-ip": "^1.0.4",
         "elysia-rate-limit": "^4.3.0",

@@ -1,0 +1,45 @@
+{
+    "name": "allknower",
+    "version": "0.1.0",
+    "description": "AI orchestration service for AllCodex — the intelligence layer behind the All Reach grimoire",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "bun --watch src/index.ts",
+        "start": "bun src/index.ts",
+        "build": "bun build src/index.ts --outdir dist --target bun",
+        "db:generate": "bunx prisma generate",
+        "db:migrate": "bunx prisma migrate dev",
+        "db:migrate:prod": "bunx prisma migrate deploy",
+        "db:studio": "bunx prisma studio",
+        "db:reset": "bunx prisma migrate reset",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@elysiajs/etag": "^1.1.0",
+        "@elysiajs/helmet": "^1.1.0",
+        "@prisma/client": "^6.3.0",
+        "better-auth": "^1.2.7",
+        "elysia": "^1.2.25",
+        "elysia-background": "^0.1.0",
+        "elysia-compression": "^1.2.0",
+        "elysia-env": "^0.1.0",
+        "elysia-healthcheck": "^0.2.0",
+        "elysia-ip": "^1.0.4",
+        "elysia-rate-limit": "^4.3.0",
+        "elysia-xss": "^1.0.0",
+        "llms-txt": "^0.1.0",
+        "logixlysia": "^2.2.0",
+        "@scalar/elysiajs": "^0.5.0",
+        "vectordb": "^0.4.20",
+        "ollama": "^0.5.11",
+        "openai": "^4.77.0",
+        "zod": "^3.24.1",
+        "@elysiajs/zod": "^1.2.0"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "prisma": "^6.3.0",
+        "typescript": "^5.7.3"
+    }
+}

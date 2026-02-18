@@ -1,5 +1,6 @@
 import { Ollama } from "ollama";
 import OpenAI from "openai";
+import { env } from "../env.ts";
 
 /**
  * Embedder — generates vector embeddings for lore text.
@@ -14,18 +15,18 @@ import OpenAI from "openai";
  */
 
 // Strip the "ollama/" provider prefix — the Ollama client only wants the model name
-const EMBEDDING_LOCAL_RAW = process.env.EMBEDDING_LOCAL ?? "ollama/nomic-embed-text";
-const OLLAMA_MODEL = EMBEDDING_LOCAL_RAW.replace(/^ollama\//, "");
+const EMBEDDING_LOCAL_RAW = env.EMBEDDING_LOCAL;
+export const OLLAMA_MODEL = EMBEDDING_LOCAL_RAW.replace(/^ollama\//, "");
 
-const EMBEDDING_CLOUD = process.env.EMBEDDING_CLOUD ?? "google/gemini-embedding-001";
+const EMBEDDING_CLOUD = env.EMBEDDING_CLOUD;
 
 const ollama = new Ollama({
-    host: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434",
+    host: env.OLLAMA_BASE_URL,
 });
 
 const openrouterClient = new OpenAI({
-    baseURL: process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1",
-    apiKey: process.env.OPENROUTER_API_KEY ?? "",
+    baseURL: env.OPENROUTER_BASE_URL,
+    apiKey: env.OPENROUTER_API_KEY,
     defaultHeaders: {
         "HTTP-Referer": "https://allknower.local",
         "X-Title": "AllKnower",

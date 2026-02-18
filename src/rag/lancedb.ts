@@ -1,8 +1,9 @@
-import * as lancedb from "vectordb";
+import * as lancedb from "@lancedb/lancedb";
 import { embed, EMBEDDING_DIMENSIONS } from "./embedder.ts";
 import type { RagChunk } from "../types/lore.ts";
+import { env } from "../env.ts";
 
-const DB_PATH = process.env.LANCEDB_PATH ?? "./data/lancedb";
+const DB_PATH = env.LANCEDB_PATH;
 const TABLE_NAME = "lore_embeddings";
 
 let _db: lancedb.Connection | null = null;
@@ -83,7 +84,7 @@ export async function queryLore(
         .search(queryVector)
         .limit(topK)
         .select(["noteId", "noteTitle", "content", "_distance"])
-        .execute();
+        .toArray();
 
     return results.map((row: any) => ({
         noteId: row.noteId as string,

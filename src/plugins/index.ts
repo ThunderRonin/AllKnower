@@ -1,9 +1,10 @@
 import Elysia from "elysia";
-import { helmet } from "elysiajs-helmet";
+import helmet from "elysiajs-helmet";
 import { etag } from "@bogeychan/elysia-etag";
 import { compression } from "elysia-compress";
 import { ip } from "elysia-ip";
-import logixlysia from "logixlysia";
+import { logger as logixlysia } from "logixlysia";
+
 
 /**
  * Registers all infrastructure plugins on the Elysia app.
@@ -12,7 +13,7 @@ import logixlysia from "logixlysia";
 export const plugins = new Elysia({ name: "allknower/plugins" })
     // Security headers
     .use(
-        helmet({
+        (helmet as any)({
             contentSecurityPolicy: false, // Disabled — Scalar UI needs inline scripts
             crossOriginEmbedderPolicy: false,
         })
@@ -35,5 +36,5 @@ export const plugins = new Elysia({ name: "allknower/plugins" })
                 customLogFormat:
                     "🧠 {now} {level} {duration} {method} {pathname} {status} {message} {ip}",
             },
-        })
+        } as any)
     );

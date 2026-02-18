@@ -1,8 +1,11 @@
 import Elysia, { t } from "elysia";
 import { getAllCodexNotes, getNoteContent } from "../etapi/client.ts";
 import { callLLM } from "../pipeline/prompt.ts";
+import { requireAuth } from "../plugins/auth-guard.ts";
 
-export const consistencyRoute = new Elysia({ prefix: "/consistency" }).post(
+export const consistencyRoute = new Elysia({ prefix: "/consistency" })
+    .use(requireAuth)
+    .post(
     "/check",
     async ({ body }) => {
         const search = body.noteIds?.length

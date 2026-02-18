@@ -2,8 +2,10 @@ import Elysia, { t } from "elysia";
 import { queryLore } from "../rag/lancedb.ts";
 import { getAllCodexNotes } from "../etapi/client.ts";
 import { callLLM } from "../pipeline/prompt.ts";
+import { requireAuth } from "../plugins/auth-guard.ts";
 
 export const suggestRoute = new Elysia({ prefix: "/suggest" })
+    .use(requireAuth)
     /**
      * Relationship suggester — given a note, find semantically similar lore
      * and ask the LLM to suggest meaningful connections.

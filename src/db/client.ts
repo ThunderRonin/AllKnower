@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { env } from "../env.ts";
 
 declare global {
     // Prevent multiple Prisma client instances in development (hot reload)
@@ -10,12 +11,12 @@ const prisma =
     globalThis.__prisma ??
     new PrismaClient({
         log:
-            process.env.NODE_ENV === "development"
+            env.NODE_ENV === "development"
                 ? ["query", "error", "warn"]
                 : ["error"],
     });
 
-if (process.env.NODE_ENV !== "production") {
+if (env.NODE_ENV !== "production") {
     globalThis.__prisma = prisma;
 }
 

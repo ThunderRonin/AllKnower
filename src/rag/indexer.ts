@@ -1,6 +1,7 @@
 import { upsertNoteChunks, chunkText } from "./lancedb.ts";
 import { getAllCodexNotes, getNoteContent } from "../etapi/client.ts";
 import prisma from "../db/client.ts";
+import { OLLAMA_MODEL } from "./embedder.ts";
 
 /**
  * RAG Indexer — background task that keeps LanceDB in sync with AllCodex.
@@ -35,13 +36,13 @@ export async function indexNote(noteId: string): Promise<void> {
                 noteId,
                 noteTitle,
                 chunkCount: chunks.length,
-                model: process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text",
+                model: OLLAMA_MODEL,
             },
             update: {
                 noteTitle,
                 chunkCount: chunks.length,
                 embeddedAt: new Date(),
-                model: process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text",
+                model: OLLAMA_MODEL,
             },
         });
 

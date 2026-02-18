@@ -8,21 +8,9 @@ import { suggestRoute } from "./routes/suggest.ts";
 import { healthRoute } from "./routes/health.ts";
 import { auth } from "./auth/index.ts";
 
-// Validate required env vars at startup
-const required = [
-    "DATABASE_URL",
-    "OPENROUTER_API_KEY",
-    "ALLCODEX_ETAPI_TOKEN",
-    "BETTER_AUTH_SECRET",
-] as const;
-for (const key of required) {
-    if (!process.env[key]) {
-        console.error(`[env] Missing required environment variable: ${key}`);
-        process.exit(1);
-    }
-}
+import { env } from "./env.ts";
 
-const PORT = Number(process.env.PORT ?? 3001);
+const PORT = env.PORT;
 
 const app = new Elysia()
     // ── Infrastructure plugins ────────────────────────────────────────────────

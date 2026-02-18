@@ -2,8 +2,10 @@ import Elysia, { t } from "elysia";
 import { queryLore } from "../rag/lancedb.ts";
 import { indexNote, fullReindex } from "../rag/indexer.ts";
 import prisma from "../db/client.ts";
+import { requireAuth } from "../plugins/auth-guard.ts";
 
 export const ragRoute = new Elysia({ prefix: "/rag" })
+    .use(requireAuth)
     .post(
         "/query",
         async ({ body }) => {

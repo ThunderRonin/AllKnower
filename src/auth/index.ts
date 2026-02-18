@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "../db/client.ts";
+import { env } from "../env.ts";
 
 /**
  * better-auth instance for AllKnower.
@@ -26,8 +27,8 @@ export const auth = betterAuth({
         },
     },
     trustedOrigins: [
-        process.env.BETTER_AUTH_URL ?? "http://localhost:3001",
-        process.env.ALLCODEX_URL ?? "http://localhost:8080",
+        env.BETTER_AUTH_URL,
+        env.ALLCODEX_URL,
     ],
 });
 

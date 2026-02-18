@@ -1,11 +1,12 @@
 import type { RagChunk } from "../types/lore.ts";
+import { env } from "../env.ts";
 
-const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? "";
+const OPENROUTER_BASE_URL = env.OPENROUTER_BASE_URL;
+const OPENROUTER_API_KEY = env.OPENROUTER_API_KEY;
 
 // Per-task model selection — each task uses the model best suited for it
-const BRAIN_DUMP_MODEL = process.env.BRAIN_DUMP_MODEL ?? "x-ai/grok-4.1-fast";
-const CONSISTENCY_MODEL = process.env.CONSISTENCY_MODEL ?? "moonshotai/kimi-k2.5";
+const BRAIN_DUMP_MODEL = env.BRAIN_DUMP_MODEL;
+const CONSISTENCY_MODEL = env.CONSISTENCY_MODEL;
 
 /**
  * Build the structured prompt for the brain dump pipeline.

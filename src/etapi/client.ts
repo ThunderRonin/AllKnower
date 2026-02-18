@@ -7,8 +7,10 @@
  * ETAPI reference: apps/server/etapi.openapi.yaml in AllCodex repo
  */
 
-const BASE_URL = process.env.ALLCODEX_URL ?? "http://localhost:8080";
-const TOKEN = process.env.ALLCODEX_ETAPI_TOKEN ?? "";
+import { env } from "../env.ts";
+
+const BASE_URL = env.ALLCODEX_URL;
+const TOKEN = env.ALLCODEX_ETAPI_TOKEN;
 
 // Basic auth: base64("token:")
 const AUTH_HEADER = `Basic ${Buffer.from(`${TOKEN}:`).toString("base64")}`;

@@ -11,6 +11,7 @@ import {
 } from "../etapi/client.ts";
 import { indexNote } from "../rag/indexer.ts";
 import prisma from "../db/client.ts";
+import { env } from "../env.ts";
 import { TEMPLATE_ID_MAP } from "../types/lore.ts";
 import type { BrainDumpResult } from "../types/lore.ts";
 
@@ -114,7 +115,7 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult> {
             parsedJson: JSON.parse(JSON.stringify({ entities, summary })),
             notesCreated: created.map((n: { noteId: string }) => n.noteId),
             notesUpdated: updated.map((n: { noteId: string }) => n.noteId),
-            model: process.env.BRAIN_DUMP_MODEL ?? "x-ai/grok-4.1-fast",
+            model: env.BRAIN_DUMP_MODEL,
             tokensUsed,
         },
     });

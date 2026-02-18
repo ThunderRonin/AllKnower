@@ -1,12 +1,15 @@
 import Elysia, { t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import { runBrainDump } from "../pipeline/brain-dump.ts";
+import { env } from "../env.ts";
+import { requireAuth } from "../plugins/auth-guard.ts";
 
 export const brainDumpRoute = new Elysia({ prefix: "/brain-dump" })
+    .use(requireAuth)
     .use(
         rateLimit({
-            max: Number(process.env.BRAIN_DUMP_RATE_LIMIT_MAX ?? 10),
-            duration: Number(process.env.BRAIN_DUMP_RATE_LIMIT_WINDOW_MS ?? 60000),
+            max: env.BRAIN_DUMP_RATE_LIMIT_MAX,
+            duration: env.BRAIN_DUMP_RATE_LIMIT_WINDOW_MS,
             errorResponse: new Response(
                 JSON.stringify({ error: "Rate limit exceeded. Brain dump is limited to 10 requests per minute." }),
                 { status: 429, headers: { "Content-Type": "application/json" } }

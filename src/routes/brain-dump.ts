@@ -1,8 +1,6 @@
-import Elysia from "elysia";
-import { z } from "@elysiajs/zod";
+import Elysia, { t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import { runBrainDump } from "../pipeline/brain-dump.ts";
-import { BrainDumpBodySchema } from "../types/lore.ts";
 
 export const brainDumpRoute = new Elysia({ prefix: "/brain-dump" })
     .use(
@@ -22,10 +20,12 @@ export const brainDumpRoute = new Elysia({ prefix: "/brain-dump" })
             return result;
         },
         {
-            body: z.object({
-                rawText: BrainDumpBodySchema.shape.rawText.describe(
-                    "Raw worldbuilding brain dump text to process"
-                ),
+            body: t.Object({
+                rawText: t.String({
+                    minLength: 10,
+                    maxLength: 50000,
+                    description: "Raw worldbuilding brain dump text to process",
+                }),
             }),
             detail: {
                 summary: "Process a brain dump",

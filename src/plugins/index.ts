@@ -1,7 +1,7 @@
 import Elysia from "elysia";
-import { helmet } from "@elysiajs/helmet";
-import { etag } from "@elysiajs/etag";
-import { compression } from "elysia-compression";
+import { helmet } from "elysiajs-helmet";
+import { etag } from "@bogeychan/elysia-etag";
+import { compression } from "elysia-compress";
 import { ip } from "elysia-ip";
 import logixlysia from "logixlysia";
 

@@ -1,8 +1,6 @@
-import Elysia from "elysia";
-import { z } from "@elysiajs/zod";
+import Elysia, { t } from "elysia";
 import { getAllCodexNotes, getNoteContent } from "../etapi/client.ts";
 import { callLLM } from "../pipeline/prompt.ts";
-import { ConsistencyCheckBodySchema } from "../types/lore.ts";
 
 export const consistencyRoute = new Elysia({ prefix: "/consistency" }).post(
     "/check",
@@ -48,9 +46,9 @@ Return JSON: { "issues": [{ "type": "contradiction"|"timeline"|"orphan"|"naming"
         return result;
     },
     {
-        body: z.object({
-            noteIds: ConsistencyCheckBodySchema.shape.noteIds.describe(
-                "Specific note IDs to check. Omit to check all lore."
+        body: t.Object({
+            noteIds: t.Optional(
+                t.Array(t.String(), { description: "Specific note IDs to check. Omit to check all lore." })
             ),
         }),
         detail: {

@@ -1,9 +1,7 @@
-import Elysia from "elysia";
-import { z } from "@elysiajs/zod";
+import Elysia, { t } from "elysia";
 import { queryLore } from "../rag/lancedb.ts";
 import { getAllCodexNotes } from "../etapi/client.ts";
 import { callLLM } from "../pipeline/prompt.ts";
-import { SuggestRelationshipsBodySchema } from "../types/lore.ts";
 
 export const suggestRoute = new Elysia({ prefix: "/suggest" })
     /**
@@ -43,10 +41,8 @@ Only suggest relationships that are genuinely plausible based on the content. Do
             return result;
         },
         {
-            body: z.object({
-                text: SuggestRelationshipsBodySchema.shape.text.describe(
-                    "Text of the new or existing lore entry to find relationships for"
-                ),
+            body: t.Object({
+                text: t.String({ description: "Text of the new or existing lore entry to find relationships for" }),
             }),
             detail: {
                 summary: "Suggest relationships",
@@ -92,7 +88,7 @@ Return JSON: { "gaps": [{ "area": "...", "severity": "high"|"medium"|"low", "des
             detail: {
                 summary: "Detect lore gaps",
                 description:
-                    "Analyzes the lore corpus and identifies underdeveloped areas (e.g. too many characters, not enough locations).",
+                    "Analyzes the lore corpus and identifies underdeveloped areas.",
                 tags: ["Intelligence"],
             },
         }

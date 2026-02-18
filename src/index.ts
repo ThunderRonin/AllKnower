@@ -1,36 +1,42 @@
 import { Elysia } from "elysia";
-import { env } from "elysia-env";
-import { swagger } from "@scalar/elysiajs";
+import { openapi } from "@elysiajs/openapi";
 import { plugins } from "./plugins/index.ts";
 import { brainDumpRoute } from "./routes/brain-dump.ts";
 import { ragRoute } from "./routes/rag.ts";
 import { consistencyRoute } from "./routes/consistency.ts";
 import { suggestRoute } from "./routes/suggest.ts";
 import { healthRoute } from "./routes/health.ts";
-import { envSchema } from "./env.ts";
 import { auth } from "./auth/index.ts";
+
+// Validate required env vars at startup
+const required = [
+    "DATABASE_URL",
+    "OPENROUTER_API_KEY",
+    "ALLCODEX_ETAPI_TOKEN",
+    "BETTER_AUTH_SECRET",
+] as const;
+for (const key of required) {
+    if (!process.env[key]) {
+        console.error(`[env] Missing required environment variable: ${key}`);
+        process.exit(1);
+    }
+}
 
 const PORT = Number(process.env.PORT ?? 3001);
 
 const app = new Elysia()
-    // ── Typesafe environment validation ──────────────────────────────────────
-    .use(env(envSchema))
-
     // ── Infrastructure plugins ────────────────────────────────────────────────
     .use(plugins)
 
-    // ── API documentation (Scalar) ────────────────────────────────────────────
+    // ── API documentation (Scalar via @elysiajs/openapi) ─────────────────────
     .use(
-        swagger({
+        openapi({
             documentation: {
                 info: {
                     title: "AllKnower API",
                     version: "0.1.0",
                     description:
                         "The intelligence layer behind AllCodex — AI orchestration, RAG, and lore management for the All Reach grimoire.",
-                    contact: {
-                        name: "AllKnower",
-                    },
                 },
                 tags: [
                     { name: "Brain Dump", description: "AI-powered lore extraction pipeline" },
@@ -41,12 +47,10 @@ const app = new Elysia()
                 ],
             },
             path: "/reference",
-            theme: "deepSpace",
         })
     )
 
     // ── better-auth handler ───────────────────────────────────────────────────
-    // Handles /api/auth/* routes (sign-in, sign-up, sign-out, session)
     .all("/api/auth/*", ({ request }) => auth.handler(request))
 
     // ── Routes ────────────────────────────────────────────────────────────────

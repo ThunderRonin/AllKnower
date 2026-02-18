@@ -1,25 +1,19 @@
-import Elysia from "elysia";
-import { z } from "@elysiajs/zod";
+import Elysia, { t } from "elysia";
 import { queryLore } from "../rag/lancedb.ts";
 import { indexNote, fullReindex } from "../rag/indexer.ts";
 import prisma from "../db/client.ts";
-import { RagQueryBodySchema, RagReindexParamsSchema } from "../types/lore.ts";
 
 export const ragRoute = new Elysia({ prefix: "/rag" })
     .post(
         "/query",
         async ({ body }) => {
-            const chunks = await queryLore(body.text, body.topK);
+            const chunks = await queryLore(body.text, body.topK ?? 10);
             return { results: chunks };
         },
         {
-            body: z.object({
-                text: RagQueryBodySchema.shape.text.describe(
-                    "Text to find semantically similar lore for"
-                ),
-                topK: RagQueryBodySchema.shape.topK.describe(
-                    "Number of results to return (1–50, default 10)"
-                ),
+            body: t.Object({
+                text: t.String({ minLength: 1, description: "Text to find semantically similar lore for" }),
+                topK: t.Optional(t.Number({ minimum: 1, maximum: 50, default: 10, description: "Number of results (1–50)" })),
             }),
             detail: {
                 summary: "Query the RAG index",
@@ -31,14 +25,11 @@ export const ragRoute = new Elysia({ prefix: "/rag" })
     .post(
         "/reindex/:noteId",
         async ({ params }) => {
-            const { noteId } = RagReindexParamsSchema.parse(params);
-            await indexNote(noteId);
-            return { ok: true, noteId };
+            await indexNote(params.noteId);
+            return { ok: true, noteId: params.noteId };
         },
         {
-            params: z.object({
-                noteId: RagReindexParamsSchema.shape.noteId.describe("AllCodex note ID to reindex"),
-            }),
+            params: t.Object({ noteId: t.String({ description: "AllCodex note ID to reindex" }) }),
             detail: {
                 summary: "Reindex a single note",
                 description: "Fetches the note from AllCodex and updates its embedding in LanceDB.",

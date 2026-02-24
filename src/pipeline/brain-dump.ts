@@ -9,7 +9,6 @@ import {
     tagNote,
     createAttribute,
 } from "../etapi/client.ts";
-import { indexNote } from "../rag/indexer.ts";
 import prisma from "../db/client.ts";
 import { env } from "../env.ts";
 import { TEMPLATE_ID_MAP } from "../types/lore.ts";
@@ -24,15 +23,14 @@ const DEFAULT_LORE_ROOT_NOTE_ID = "root";
  * Main brain dump pipeline.
  *
  * 1. Query LanceDB for semantically similar existing lore (RAG context)
- * 2. Build Claude prompt with RAG context injected
- * 3. Call Claude via OpenRouter
+ * 2. Build prompt with RAG context injected
+ * 3. Call LLM via OpenRouter
  * 4. Parse structured JSON response
  * 5. Create/update notes in AllCodex via ETAPI
- * 6. Trigger background RAG reindex for new/updated notes
- * 7. Persist to BrainDumpHistory
- * 8. Return summary to user
+ * 6. Persist to BrainDumpHistory
+ * 7. Return summary + reindexIds to caller (route schedules background reindex)
  */
-export async function runBrainDump(rawText: string): Promise<BrainDumpResult> {
+export async function runBrainDump(rawText: string): Promise<BrainDumpResult & { reindexIds: string[] }> {
     // Step 1: RAG context retrieval
     const ragContext = await queryLore(rawText, 10);
 
@@ -52,6 +50,8 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult> {
     const loreRootNoteId = loreRootConfig?.value ?? DEFAULT_LORE_ROOT_NOTE_ID;
 
     // Step 5: Create/update notes in AllCodex
+    const reindexIds: string[] = [];
+
     for (const entity of entities) {
         try {
             if (entity.action === "update" && entity.existingNoteId) {
@@ -61,9 +61,7 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult> {
                     await setNoteContent(entity.existingNoteId, entity.content);
                 }
                 updated.push({ noteId: entity.existingNoteId, title: entity.title, type: entity.type });
-
-                // Reindex in background (fire and forget)
-                indexNote(entity.existingNoteId).catch(console.error);
+                reindexIds.push(entity.existingNoteId);
             } else {
                 // Create new note
                 const { note } = await createNote({
@@ -97,9 +95,7 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult> {
                 }
 
                 created.push({ noteId: note.noteId, title: entity.title, type: entity.type });
-
-                // Reindex in background (fire and forget)
-                indexNote(note.noteId).catch(console.error);
+                reindexIds.push(note.noteId);
             }
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : String(error);
@@ -120,5 +116,5 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult> {
         },
     });
 
-    return { summary, created, updated, skipped };
+    return { summary, created, updated, skipped, reindexIds };
 }

@@ -39,7 +39,9 @@ const app = new Elysia()
     )
 
     // ── better-auth handler ───────────────────────────────────────────────────
-    .all("/api/auth/*", ({ request }) => auth.handler(request))
+    .all("/api/auth/*", ({ request }) => auth.handler(request), {
+        parse: "none",
+    })
 
     // ── Routes ────────────────────────────────────────────────────────────────
     .use(healthRoute)

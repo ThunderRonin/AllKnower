@@ -95,6 +95,7 @@ See [`.env.example`](.env.example) for the full list. Required vars:
 | `POST` | `/consistency/check` | Run consistency scan |
 | `POST` | `/suggest/relationships` | Suggest lore connections |
 | `GET` | `/suggest/gaps` | Detect lore gaps |
+| `GET` | `/suggest/autocomplete` | Lore title autocomplete (prefix + semantic) |
 | `GET` | `/health` | Service health (AllCodex, Ollama, LanceDB, Postgres) |
 | `GET` | `/reference` | Scalar API docs |
 

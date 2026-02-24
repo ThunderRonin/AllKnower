@@ -30,11 +30,7 @@ export const envSchema = z.object({
     CONSISTENCY_MODEL: z.string().default("moonshotai/kimi-k2.5"),
 
     // Embedding Models
-    EMBEDDING_LOCAL: z.string().default("ollama/nomic-embed-text"),
     EMBEDDING_CLOUD: z.string().default("google/gemini-embedding-001"),
-
-    // Ollama
-    OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
 
     // LanceDB
     LANCEDB_PATH: z.string().default("./data/lancedb"),

@@ -1,11 +1,14 @@
 import Elysia, { t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
+import { background } from "elysia-background";
 import { runBrainDump } from "../pipeline/brain-dump.ts";
+import { indexNote } from "../rag/indexer.ts";
 import { env } from "../env.ts";
 import { requireAuth } from "../plugins/auth-guard.ts";
 
 export const brainDumpRoute = new Elysia({ prefix: "/brain-dump" })
     .use(requireAuth)
+    .use(background())
     .use(
         rateLimit({
             max: env.BRAIN_DUMP_RATE_LIMIT_MAX,
@@ -18,8 +21,15 @@ export const brainDumpRoute = new Elysia({ prefix: "/brain-dump" })
     )
     .post(
         "/",
-        async ({ body }) => {
-            const result = await runBrainDump(body.rawText);
+        async ({ body, backgroundTasks }) => {
+            const { reindexIds, ...result } = await runBrainDump(body.rawText);
+
+            // Schedule RAG reindex for each created/updated note as a background task.
+            // Response is sent immediately; reindex happens after the request completes.
+            for (const noteId of reindexIds) {
+                backgroundTasks.addTask(indexNote, noteId);
+            }
+
             return result;
         },
         {

@@ -3,6 +3,7 @@ import { queryLore } from "../rag/lancedb.ts";
 import { getAllCodexNotes } from "../etapi/client.ts";
 import { callLLM } from "../pipeline/prompt.ts";
 import { requireAuth } from "../plugins/auth-guard.ts";
+import prisma from "../db/client.ts";
 
 export const suggestRoute = new Elysia({ prefix: "/suggest" })
     .use(requireAuth)
@@ -91,6 +92,60 @@ Return JSON: { "gaps": [{ "area": "...", "severity": "high"|"medium"|"low", "des
                 summary: "Detect lore gaps",
                 description:
                     "Analyzes the lore corpus and identifies underdeveloped areas.",
+                tags: ["Intelligence"],
+            },
+        }
+    )
+    /**
+     * Autocomplete — fast lore title suggestions as the user types.
+     *
+     * Phase 1: Prisma title prefix match (instant, SQL).
+     * Phase 2: Semantic LanceDB fallback to fill remaining slots.
+     */
+    .get(
+        "/autocomplete",
+        async ({ query }) => {
+            const q = query.q;
+            const limit = Number(query.limit ?? 10);
+
+            // Phase 1: fast prefix match from the RAG index metadata table
+            const prefixMatches = await prisma.ragIndexMeta.findMany({
+                where: { noteTitle: { contains: q, mode: "insensitive" } },
+                take: limit,
+                select: { noteId: true, noteTitle: true },
+                orderBy: { noteTitle: "asc" },
+            });
+
+            const seen = new Set(prefixMatches.map((m) => m.noteId));
+            const suggestions = prefixMatches.map((m) => ({
+                noteId: m.noteId,
+                title: m.noteTitle,
+            }));
+
+            // Phase 2: semantic fill if prefix didn't saturate the limit
+            if (suggestions.length < limit) {
+                const remaining = limit - suggestions.length;
+                const semantic = await queryLore(q, remaining + seen.size);
+                for (const chunk of semantic) {
+                    if (!seen.has(chunk.noteId)) {
+                        suggestions.push({ noteId: chunk.noteId, title: chunk.noteTitle });
+                        seen.add(chunk.noteId);
+                    }
+                    if (suggestions.length >= limit) break;
+                }
+            }
+
+            return { suggestions };
+        },
+        {
+            query: t.Object({
+                q: t.String({ minLength: 1, description: "Partial title or concept to search for" }),
+                limit: t.Optional(t.Numeric({ minimum: 1, maximum: 20, default: 10, description: "Max suggestions (1–20)" })),
+            }),
+            detail: {
+                summary: "Lore autocomplete",
+                description:
+                    "Returns lore entry suggestions as the user types. Phase 1: instant title prefix match. Phase 2: semantic similarity fallback.",
                 tags: ["Intelligence"],
             },
         }

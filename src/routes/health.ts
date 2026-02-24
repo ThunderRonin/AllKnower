@@ -1,15 +1,13 @@
 import Elysia from "elysia";
 import { checkAllCodexHealth } from "../etapi/client.ts";
-import { checkOllamaHealth } from "../rag/embedder.ts";
 import { checkLanceDbHealth } from "../rag/lancedb.ts";
 import prisma from "../db/client.ts";
 
 export const healthRoute = new Elysia({ prefix: "/health" }).get(
     "/",
     async () => {
-        const [allcodex, ollama, lancedb, db] = await Promise.allSettled([
+        const [allcodex, lancedb, db] = await Promise.allSettled([
             checkAllCodexHealth(),
-            checkOllamaHealth(),
             checkLanceDbHealth(),
             prisma.$queryRaw`SELECT 1`.then(() => ({ ok: true })).catch((e: any) => ({ ok: false, error: e.message })),
         ]);
@@ -19,7 +17,6 @@ export const healthRoute = new Elysia({ prefix: "/health" }).get(
 
         const checks = {
             allcodex: resolve(allcodex),
-            ollama: resolve(ollama),
             lancedb: resolve(lancedb),
             database: resolve(db),
         };
@@ -37,7 +34,7 @@ export const healthRoute = new Elysia({ prefix: "/health" }).get(
     {
         detail: {
             summary: "Health check",
-            description: "Checks AllCodex ETAPI, Ollama, LanceDB, and PostgreSQL connectivity.",
+            description: "Checks AllCodex ETAPI, LanceDB, and PostgreSQL connectivity.",
             tags: ["System"],
         },
     }

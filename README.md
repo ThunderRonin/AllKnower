@@ -13,10 +13,11 @@ AllKnower sits behind AllCodex and provides:
 | Feature | Description |
 |---|---|
 | **Brain Dump** | Paste raw worldbuilding notes → LLM extracts structured lore entities → creates/updates notes in AllCodex via ETAPI |
-| **Local RAG** | All lore is embedded (Ollama) and stored in LanceDB. Semantically similar lore is injected as context on every brain dump to prevent contradictions |
-| **Consistency Checker** | On-demand scan for contradictions, timeline conflicts, orphaned references, and naming inconsistencies |
-| **Relationship Suggester** | After creating an entity, suggests connections to existing lore via semantic similarity |
-| **Lore Gap Detector** | Identifies underdeveloped areas ("12 characters, only 2 locations") |
+| **RAG System** | All lore is embedded via cloud models (Gemini) and stored in LanceDB. Semantically similar lore is injected as context on every brain dump to prevent contradictions. |
+| **Lore Autocomplete** | Instant title suggestions via two-phase lookup (SQL prefix match + semantic fallback) for inline linking in AllCodex. |
+| **Consistency Checker** | On-demand scan for contradictions, timeline conflicts, orphaned references, and naming inconsistencies. |
+| **Relationship Suggester** | Suggests connections between entities based on semantic relevance and context. |
+| **Lore Gap Detector** | Identifies underdeveloped areas in the worldbuilding (e.g., "many characters, few locations"). |
 
 ---
 
@@ -27,13 +28,14 @@ AllKnower sits behind AllCodex and provides:
 | Runtime | Bun |
 | Framework | Elysia |
 | Database | PostgreSQL + Prisma |
-| Auth | better-auth |
-| Vector DB | LanceDB (embedded, no separate server) |
-| Embeddings | Ollama `nomic-embed-text` (local) · Google `gemini-embedding-001` (fallback) |
+| Auth | better-auth (supports Bearer + Session) |
+| Vector DB | LanceDB (embedded) |
+| Embeddings | `google/gemini-embedding-001` via OpenRouter |
 | LLM — Brain Dump | `x-ai/grok-4.1-fast` via OpenRouter |
 | LLM — Consistency | `moonshotai/kimi-k2.5` via OpenRouter |
+| Background Jobs | `elysia-background` (RAG indexing) |
 | API Docs | Scalar at `/reference` |
-| Type Safety | Zod (schemas → types, route validation, LLM output parsing) |
+| Type Safety | Hybrid (TypeBox for HTTP, Zod for LLM Data) |
 
 ---
 
@@ -43,7 +45,6 @@ AllKnower sits behind AllCodex and provides:
 
 - [Bun](https://bun.sh) ≥ 1.2
 - PostgreSQL
-- [Ollama](https://ollama.ai) with `nomic-embed-text` pulled
 - A running AllCodex instance with an ETAPI token
 - An [OpenRouter](https://openrouter.ai) API key
 
@@ -89,14 +90,14 @@ See [`.env.example`](.env.example) for the full list. Required vars:
 | `POST` | `/brain-dump` | Process raw worldbuilding text |
 | `GET` | `/brain-dump/history` | Last 20 brain dump operations |
 | `POST` | `/rag/query` | Semantic search over lore index |
-| `POST` | `/rag/reindex/:noteId` | Reindex a single note |
+| `POST` | `/rag/reindex/:noteId` | Reindex a single note (background) |
 | `POST` | `/rag/reindex` | Full corpus reindex |
 | `GET` | `/rag/status` | Index stats |
 | `POST` | `/consistency/check` | Run consistency scan |
 | `POST` | `/suggest/relationships` | Suggest lore connections |
 | `GET` | `/suggest/gaps` | Detect lore gaps |
-| `GET` | `/suggest/autocomplete` | Lore title autocomplete (prefix + semantic) |
-| `GET` | `/health` | Service health (AllCodex, Ollama, LanceDB, Postgres) |
+| `GET` | `/suggest/autocomplete` | Title autocomplete (prefix + semantic fallback) |
+| `GET` | `/health` | Deep service health check (ETAPI, Postgres, LanceDB) |
 | `GET` | `/reference` | Scalar API docs |
 
 ---
@@ -107,21 +108,21 @@ See [`.env.example`](.env.example) for the full list. Required vars:
 src/
 ├── index.ts              # App entry point
 ├── env.ts                # Typesafe env schema
-├── auth/                 # better-auth setup
+├── auth/                 # better-auth setup (Bearer enabled)
 ├── db/                   # Prisma client
 ├── etapi/                # AllCodex ETAPI client
 ├── pipeline/
 │   ├── brain-dump.ts     # Main orchestrator
-│   ├── prompt.ts         # LLM calls (callLLM with per-task model selection)
-│   └── parser.ts         # Zod-powered LLM response parser
+│   ├── prompt.ts         # LLM calls (callLLM)
+│   └── parser.ts         # Zod LLM response parser
 ├── plugins/              # Elysia infrastructure plugins
 ├── rag/
-│   ├── embedder.ts       # Ollama + OpenRouter embeddings
-│   ├── lancedb.ts        # Vector store
-│   └── indexer.ts        # Index management
+│   ├── embedder.ts       # Service-agnostic cloud embedder
+│   ├── lancedb.ts        # Vector store (LanceDB)
+│   └── indexer.ts        # Index lifecycle management
 ├── routes/               # API route handlers
 └── types/
-    └── lore.ts           # Zod schemas (single source of truth for all types)
+    └── lore.ts           # Central Zod schemas for lore entities
 ```
 
 ---

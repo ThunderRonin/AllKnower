@@ -29,9 +29,8 @@ const app = new Elysia()
                 tags: [
                     { name: "Brain Dump", description: "AI-powered lore extraction pipeline" },
                     { name: "RAG", description: "Retrieval-augmented generation index management" },
-                    { name: "Intelligence", description: "Consistency checking and relationship suggestions" },
+                    { name: "Intelligence", description: "Consistency checking, relationship suggestions, and autocomplete" },
                     { name: "System", description: "Health and system status" },
-                    { name: "Auth", description: "Authentication" },
                 ],
             },
             path: "/reference",
@@ -41,6 +40,7 @@ const app = new Elysia()
     // ── better-auth handler ───────────────────────────────────────────────────
     .all("/api/auth/*", ({ request }) => auth.handler(request), {
         parse: "none",
+        detail: { hide: true },
     })
 
     // ── Routes ────────────────────────────────────────────────────────────────

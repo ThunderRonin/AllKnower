@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { bearer } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "../db/client.ts";
 import { env } from "../env.ts";
@@ -29,6 +30,9 @@ export const auth = betterAuth({
     trustedOrigins: [
         env.BETTER_AUTH_URL,
         env.ALLCODEX_URL,
+    ],
+    plugins: [
+        bearer(), // enables Authorization: Bearer <token> for programmatic clients
     ],
 });
 

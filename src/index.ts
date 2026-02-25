@@ -7,6 +7,7 @@ import { ragRoute } from "./routes/rag.ts";
 import { consistencyRoute } from "./routes/consistency.ts";
 import { suggestRoute } from "./routes/suggest.ts";
 import { healthRoute } from "./routes/health.ts";
+import { setupRoute } from "./routes/setup.ts";
 import { auth } from "./auth/index.ts";
 
 import { env } from "./env.ts";
@@ -72,6 +73,7 @@ const app = new Elysia()
     .use(ragRoute)
     .use(consistencyRoute)
     .use(suggestRoute)
+    .use(setupRoute)
 
     // ── Root ──────────────────────────────────────────────────────────────────
     .get("/", () => ({

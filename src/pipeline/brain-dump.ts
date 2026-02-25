@@ -71,13 +71,17 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult & {
                     content: entity.content ?? "",
                 });
 
-                // Link to lore template
+                // Link to lore template (best-effort — template may not exist yet)
                 const templateId = TEMPLATE_ID_MAP[entity.type];
-                await setNoteTemplate(note.noteId, templateId);
+                try {
+                    await setNoteTemplate(note.noteId, templateId);
+                } catch {
+                    console.warn(`[brain-dump] Template "${templateId}" not found — skipping template link for "${entity.title}"`);
+                }
 
                 // Tag as lore entry
                 await tagNote(note.noteId, "lore");
-                await tagNote(note.noteId, entity.type);
+                await tagNote(note.noteId, "loreType", entity.type);
 
                 // Set promoted attributes
                 if (entity.attributes && typeof entity.attributes === "object") {

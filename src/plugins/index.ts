@@ -2,7 +2,6 @@ import Elysia from "elysia";
 import { elysiaHelmet } from "elysiajs-helmet";
 import { etag } from "@bogeychan/elysia-etag";
 import { ip } from "elysia-ip";
-import { logixlysia } from "logixlysia";
 import { background } from "elysia-background";
 
 
@@ -33,18 +32,4 @@ export const plugins = new Elysia({ name: "allknower/plugins" })
     // Background task queue — makes backgroundTasks available in all route handlers
     .use(background())
     // IP resolution — available in request context for logging and auth
-    .use(ip())
-    // Beautiful request logging with colors and timestamps
-    .use(
-        logixlysia({
-            config: {
-                showStartupMessage: true,
-                startupMessageFormat: "simple",
-                timestamp: { translateTime: "HH:MM:ss" },
-                ip: true,
-                logFilePath: "./logs/allknower.log",
-                customLogFormat:
-                    "🧠 {now} {level} {duration} {method} {pathname} {status} {message} {ip}",
-            },
-        } as any)
-    );
+    .use(ip());

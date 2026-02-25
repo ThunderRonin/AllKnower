@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { openapi } from "@elysiajs/openapi";
+import { logixlysia } from "logixlysia";
 import { plugins } from "./plugins/index.ts";
 import { brainDumpRoute } from "./routes/brain-dump.ts";
 import { ragRoute } from "./routes/rag.ts";
@@ -13,6 +14,20 @@ import { env } from "./env.ts";
 const PORT = env.PORT;
 
 const app = new Elysia()
+    // ── Request logging ───────────────────────────────────────────────────────
+    .use(
+        logixlysia({
+            config: {
+                showStartupMessage: true,
+                startupMessageFormat: "simple",
+                timestamp: { translateTime: "HH:MM:ss" },
+                ip: true,
+                logFilePath: "./logs/allknower.log",
+                customLogFormat:
+                    "🧠 {now} {level} {duration} {method} {pathname} {status} {message} {ip}",
+            },
+        } as any)
+    )
     // ── Infrastructure plugins ────────────────────────────────────────────────
     .use(plugins)
 
@@ -40,6 +55,14 @@ const app = new Elysia()
     // ── better-auth handler ───────────────────────────────────────────────────
     .all("/api/auth/*", ({ request }) => auth.handler(request), {
         parse: "none",
+        detail: { hide: true },
+    })
+
+    // ── Auth pages ───────────────────────────────────────────────────────────
+    .get("/register", () => Bun.file("src/register.html"), {
+        detail: { hide: true },
+    })
+    .get("/login", () => Bun.file("src/login.html"), {
         detail: { hide: true },
     })
 

@@ -2,7 +2,7 @@
  * AllCodex ETAPI Client
  *
  * HTTP client for communicating with AllCodex (Trilium) via its REST API.
- * Auth: Basic auth with ETAPI token (token as username, empty password).
+ * Auth: Raw ETAPI token in Authorization header.
  *
  * ETAPI reference: apps/server/etapi.openapi.yaml in AllCodex repo
  */
@@ -12,8 +12,7 @@ import { env } from "../env.ts";
 const BASE_URL = env.ALLCODEX_URL;
 const TOKEN = env.ALLCODEX_ETAPI_TOKEN;
 
-// Basic auth: base64("token:")
-const AUTH_HEADER = `Basic ${Buffer.from(`${TOKEN}:`).toString("base64")}`;
+const AUTH_HEADER = TOKEN;
 
 const DEFAULT_HEADERS = {
     Authorization: AUTH_HEADER,

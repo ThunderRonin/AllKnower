@@ -1,8 +1,6 @@
 # AllKnower
 
-The intelligence layer behind [AllCodex](https://github.com/ThunderRonin/AllCodex) — an AI orchestration service for managing the **All Reach** fantasy world grimoire.
-
-Built with **Elysia** on **Bun**.
+The intelligence layer behind [AllCodex](https://github.com/ThunderRonin/AllCodex). An AI orchestration service for managing the **All Reach** fantasy world grimoire, built with **Elysia** on **Bun**.
 
 ---
 
@@ -95,8 +93,10 @@ See [`.env.example`](.env.example) for the full list. Required vars:
 | `GET` | `/rag/status` | Index stats |
 | `POST` | `/consistency/check` | Run consistency scan |
 | `POST` | `/suggest/relationships` | Suggest lore connections |
+| `POST` | `/suggest/relationships/apply` | Write suggested relations back to AllCodex |
 | `GET` | `/suggest/gaps` | Detect lore gaps |
 | `GET` | `/suggest/autocomplete` | Title autocomplete (prefix + semantic fallback) |
+| `POST` | `/import/azgaar` | Bulk-import locations and factions from an Azgaar FMG export |
 | `GET` | `/health` | Deep service health check (ETAPI, Postgres, LanceDB) |
 | `GET` | `/reference` | Scalar API docs |
 
@@ -124,6 +124,21 @@ src/
 └── types/
     └── lore.ts           # Central Zod schemas for lore entities
 ```
+
+---
+
+## Contributing
+
+This project is purpose-built for the All Reach grimoire, but the architecture is generic enough to work with any worldbuilding project on top of a Trilium/AllCodex instance.
+
+If you want to contribute:
+
+- Open an issue before starting significant work so we can discuss direction
+- Keep PRs focused — one feature or fix per PR
+- Follow the existing code style (TypeScript strict, Elysia routes, Zod schemas in `src/types/lore.ts`)
+- New routes need an entry in the API table in this README
+
+See [docs/remaining-features-plan.md](docs/remaining-features-plan.md) for a list of planned features with detailed specs if you're looking for something to pick up.
 
 ---
 

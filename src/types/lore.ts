@@ -192,14 +192,14 @@ export const LoreEntitySchema = z.discriminatedUnion("type", [
 ]);
 export type LoreEntity = z.infer<typeof LoreEntitySchema>;
 
-// ── Claude response schema ────────────────────────────────────────────────────
+// ── LLM response schema ──────────────────────────────────────────────────────
 
-/** Shape of the JSON Claude returns from the brain dump prompt */
-export const ClaudeResponseSchema = z.object({
+/** Shape of the structured JSON the LLM returns from the brain dump prompt */
+export const LLMResponseSchema = z.object({
     entities: z.array(LoreEntitySchema),
     summary: z.string(),
 });
-export type ClaudeResponse = z.infer<typeof ClaudeResponseSchema>;
+export type LLMResponse = z.infer<typeof LLMResponseSchema>;
 
 // ── Pipeline result schemas ───────────────────────────────────────────────────
 

@@ -1,33 +1,22 @@
 import type { RagChunk } from "../types/lore.ts";
-import { env } from "../env.ts";
-
-const OPENROUTER_BASE_URL = env.OPENROUTER_BASE_URL;
-const OPENROUTER_API_KEY = env.OPENROUTER_API_KEY;
-
-// Per-task model selection — each task uses the model best suited for it
-const BRAIN_DUMP_MODEL = env.BRAIN_DUMP_MODEL;
-const CONSISTENCY_MODEL = env.CONSISTENCY_MODEL;
+import { callWithFallback, type TaskType } from "./model-router.ts";
 
 /**
- * Build the structured prompt for the brain dump pipeline.
+ * Prompt builder and LLM caller for AllKnower pipelines.
  *
- * The model receives:
- * 1. System prompt — role, output format, constraints
- * 2. RAG context — semantically similar existing lore
- * 3. User message — the raw brain dump text
+ * Prompt structure is cache-friendly:
+ *   1. System message — STATIC rules, output format, constraints (cacheable prefix)
+ *   2. User message 1 — DYNAMIC RAG context (changes per query)
+ *   3. User message 2 — DYNAMIC user input (changes per query)
+ *
+ * OpenRouter providers (Gemini, Claude, etc.) automatically cache the
+ * prefix of identical messages. Keeping the system prompt fully static
+ * maximizes cache hit rate and reduces latency + cost.
  */
-export function buildBrainDumpPrompt(
-    rawText: string,
-    ragContext: RagChunk[]
-): { system: string; user: string } {
-    const contextBlock =
-        ragContext.length > 0
-            ? ragContext
-                .map((c) => `### ${c.noteTitle}\n${c.content}`)
-                .join("\n\n")
-            : "No existing lore found — this appears to be new content.";
 
-    const system = `You are the lore architect for a fantasy world called All Reach.
+// ── Static system prompt (identical across all brain dump calls) ──────────────
+
+const BRAIN_DUMP_SYSTEM = `You are the lore architect for a fantasy world called All Reach.
 Your job is to parse raw worldbuilding notes and extract structured lore entities.
 
 ## Output Format
@@ -60,63 +49,64 @@ Return a JSON object with this exact shape:
 - If the raw text mentions an entity that already exists in the context, set action to "update" and include the existingNoteId
 - If you are unsure about a detail, omit that field rather than guessing
 - Secrets (sensitive plot info) should go in the "secrets" attribute field, not in the main content
-- Return ONLY valid JSON — no markdown fences, no explanation outside the JSON
+- Return ONLY valid JSON — no markdown fences, no explanation outside the JSON`;
 
-## Existing Lore Context
-The following lore already exists in the grimoire. Use it to avoid contradictions and identify updates:
+/**
+ * Build the structured prompt for the brain dump pipeline.
+ *
+ * Returns a cache-friendly message array:
+ *   - system: fully static (rules + schema)
+ *   - context: dynamic RAG results (separate user message)
+ *   - user: the raw brain dump text
+ */
+export function buildBrainDumpPrompt(
+    rawText: string,
+    ragContext: RagChunk[]
+): { system: string; context: string; user: string } {
+    const contextBlock =
+        ragContext.length > 0
+            ? ragContext
+                .map((c) => `### ${c.noteTitle}\n${c.content}`)
+                .join("\n\n")
+            : "No existing lore found — this appears to be new content.";
 
-${contextBlock}`;
+    const context = `## Existing Lore Context\nThe following lore already exists in the grimoire. Use it to avoid contradictions and identify updates:\n\n${contextBlock}`;
 
     const user = `Parse the following worldbuilding notes into structured lore entities:\n\n${rawText}`;
 
-    return { system, user };
+    return { system: BRAIN_DUMP_SYSTEM, context, user };
 }
 
 /**
- * Call an LLM via OpenRouter.
+ * Call an LLM via OpenRouter with automatic server-side fallback.
  *
- * @param system  System prompt
- * @param user    User message
- * @param task    Which task this call is for — selects the appropriate model
+ * @param system   System prompt (static — placed first for cache hits)
+ * @param user     User message (dynamic)
+ * @param task     Which task this call is for — selects the appropriate model chain
+ * @param context  Optional dynamic context message (placed between system and user)
  */
 export async function callLLM(
     system: string,
     user: string,
-    task: "brain-dump" | "consistency" | "suggest" = "brain-dump"
-): Promise<{ raw: string; tokensUsed: number }> {
-    const model =
-        task === "consistency" ? CONSISTENCY_MODEL : BRAIN_DUMP_MODEL;
+    task: TaskType = "brain-dump",
+    context?: string
+): Promise<{ raw: string; tokensUsed: number; model: string }> {
+    const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+        { role: "system", content: system },
+    ];
 
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://allknower.local",
-            "X-Title": "AllKnower",
-        },
-        body: JSON.stringify({
-            model,
-            messages: [
-                { role: "system", content: system },
-                { role: "user", content: user },
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.3,
-            max_tokens: 4096,
-        }),
-    });
-
-    if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`OpenRouter error ${response.status} (model: ${model}): ${err}`);
+    // Dynamic context goes after the static system prompt
+    if (context) {
+        messages.push({ role: "user", content: context });
     }
 
-    const data = await response.json() as any;
-    const raw = data.choices[0].message.content as string;
-    const tokensUsed = data.usage?.total_tokens ?? 0;
+    messages.push({ role: "user", content: user });
 
-    return { raw, tokensUsed };
+    return callWithFallback(task, messages, {
+        temperature: 0.3,
+        maxTokens: 4096,
+        responseFormat: { type: "json_object" },
+    });
 }
 
 /**

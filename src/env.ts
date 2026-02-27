@@ -25,9 +25,29 @@ export const envSchema = z.object({
     OPENROUTER_API_KEY: z.string().min(1),
     OPENROUTER_BASE_URL: z.string().default("https://openrouter.ai/api/v1"),
 
-    // LLM Models (routed through OpenRouter)
+    // OpenRouter auto-routing toggle — overrides all per-task models with "openrouter/auto"
+    USE_OPENROUTER_AUTO: z.string().default("false"),
+
+    // LLM Models — per-task primary + up to 2 fallbacks (empty string = disabled)
     BRAIN_DUMP_MODEL: z.string().default("x-ai/grok-4.1-fast"),
+    BRAIN_DUMP_FALLBACK_1: z.string().default(""),
+    BRAIN_DUMP_FALLBACK_2: z.string().default(""),
+
     CONSISTENCY_MODEL: z.string().default("moonshotai/kimi-k2.5"),
+    CONSISTENCY_FALLBACK_1: z.string().default(""),
+    CONSISTENCY_FALLBACK_2: z.string().default(""),
+
+    SUGGEST_MODEL: z.string().default("aion-labs/aion-2.0"),
+    SUGGEST_FALLBACK_1: z.string().default(""),
+    SUGGEST_FALLBACK_2: z.string().default(""),
+
+    GAP_DETECT_MODEL: z.string().default("aion-labs/aion-2.0"),
+    GAP_DETECT_FALLBACK_1: z.string().default(""),
+    GAP_DETECT_FALLBACK_2: z.string().default(""),
+
+    AUTOCOMPLETE_MODEL: z.string().default("liquid/lfm-24b"),
+    AUTOCOMPLETE_FALLBACK_1: z.string().default(""),
+    AUTOCOMPLETE_FALLBACK_2: z.string().default(""),
 
     // Embedding Models
     EMBEDDING_CLOUD: z.string().default("google/gemini-embedding-001"),

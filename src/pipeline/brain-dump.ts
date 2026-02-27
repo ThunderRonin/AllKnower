@@ -34,9 +34,9 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult & {
     // Step 1: RAG context retrieval
     const ragContext = await queryLore(rawText, 10);
 
-    // Step 2 & 3: Build prompt and call Claude
-    const { system, user } = buildBrainDumpPrompt(rawText, ragContext);
-    const { raw, tokensUsed } = await callLLM(system, user, "brain-dump");
+    // Step 2 & 3: Build prompt and call LLM
+    const { system, context, user } = buildBrainDumpPrompt(rawText, ragContext);
+    const { raw, tokensUsed, model } = await callLLM(system, user, "brain-dump", context);
 
     // Step 4: Parse response
     const { entities, summary } = parseBrainDumpResponse(raw);
@@ -115,7 +115,7 @@ export async function runBrainDump(rawText: string): Promise<BrainDumpResult & {
             parsedJson: JSON.parse(JSON.stringify({ entities, summary })),
             notesCreated: created.map((n: { noteId: string }) => n.noteId),
             notesUpdated: updated.map((n: { noteId: string }) => n.noteId),
-            model: env.BRAIN_DUMP_MODEL,
+            model,
             tokensUsed,
         },
     });

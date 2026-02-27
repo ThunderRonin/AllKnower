@@ -1,10 +1,10 @@
-import { ClaudeResponseSchema } from "../types/lore.ts";
+import { LLMResponseSchema } from "../types/lore.ts";
 import type { LoreEntity } from "../types/lore.ts";
 
 /**
  * Parse and validate the raw JSON string returned by the LLM.
  *
- * Uses ClaudeResponseSchema (Zod) as the single source of truth.
+ * Uses LLMResponseSchema (Zod) as the single source of truth.
  * Invalid entities are logged and dropped rather than crashing the pipeline.
  */
 export interface ParsedBrainDump {
@@ -21,7 +21,7 @@ export function parseBrainDumpResponse(raw: string): ParsedBrainDump {
         throw new Error(`LLM returned invalid JSON: ${raw.slice(0, 200)}`);
     }
 
-    const result = ClaudeResponseSchema.safeParse(json);
+    const result = LLMResponseSchema.safeParse(json);
 
     if (!result.success) {
         // Log each validation issue for debugging, then return what we can
@@ -38,7 +38,7 @@ export function parseBrainDumpResponse(raw: string): ParsedBrainDump {
         const validEntities: LoreEntity[] = [];
         for (const entity of rawEntities) {
             // Try each entity individually against the discriminated union
-            const entityResult = ClaudeResponseSchema.shape.entities.element.safeParse(entity);
+            const entityResult = LLMResponseSchema.shape.entities.element.safeParse(entity);
             if (entityResult.success) {
                 validEntities.push(entityResult.data);
             } else {

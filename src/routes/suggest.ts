@@ -32,7 +32,7 @@ Only suggest relationships that are genuinely plausible based on the content. Do
 
             const user = `New entry:\n${body.text}\n\nExisting lore:\n${contextBlock}`;
 
-            const { raw } = await callLLM(system, user, "brain-dump");
+            const { raw } = await callLLM(system, user, "suggest");
 
             let result: unknown;
             try {
@@ -76,7 +76,7 @@ Return JSON: { "gaps": [{ "area": "...", "severity": "high"|"medium"|"low", "des
 
             const user = `Lore entry counts by type:\n${JSON.stringify(typeCounts, null, 2)}\n\nTotal entries: ${notes.length}`;
 
-            const { raw } = await callLLM(system, user, "brain-dump");
+            const { raw } = await callLLM(system, user, "gap-detect");
 
             let result: unknown;
             try {

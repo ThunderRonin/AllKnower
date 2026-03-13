@@ -54,7 +54,7 @@ export const envSchema = z.object({
     RERANK_FALLBACK_2: z.string().default(""),
 
     // Embedding Models
-    EMBEDDING_CLOUD: z.string().default("google/gemini-embedding-001"),
+    EMBEDDING_CLOUD: z.string().default("qwen/qwen3-embedding-8b"),
 
     // LanceDB
     LANCEDB_PATH: z.string().default("./data/lancedb"),

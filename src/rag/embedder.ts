@@ -20,10 +20,10 @@ const openrouterClient = new OpenAI({
     },
 });
 
-// qwen3-embedding-8b produces 1536-dim vectors.
-// LanceDB table is created with the dimension of the first embedding written —
-// switching models requires a full reindex.
-export const EMBEDDING_DIMENSIONS = 1536;
+// qwen/qwen3-embedding-8b produces 4096-dim vectors.
+// LanceDB table schema is fixed at creation time — switching models requires
+// dropping the table and running a full reindex (POST /rag/reindex).
+export const EMBEDDING_DIMENSIONS = 4096;
 
 /**
  * Embed a single text string.

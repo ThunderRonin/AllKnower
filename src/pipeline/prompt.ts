@@ -103,8 +103,8 @@ export async function callLLM(
     messages.push({ role: "user", content: user });
 
     return callWithFallback(task, messages, {
-        temperature: 0.3,
-        maxTokens: 4096,
+        temperature: 0.3, // low temp for more deterministic output
+        maxTokens: 65536, // set high maxTokens to avoid truncation of long outputs
         responseFormat: { type: "json_object" },
     });
 }

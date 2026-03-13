@@ -10,6 +10,17 @@ import { z } from "zod";
  *   - Runtime type guards anywhere in the codebase
  */
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * LLMs frequently return arrays for fields we want as strings (goals, abilities, etc.).
+ * This coerces string[] → comma-joined string, passes strings through, drops null/undefined.
+ */
+const coerceToString = z
+    .union([z.string(), z.array(z.string())])
+    .transform((v) => (Array.isArray(v) ? v.join(", ") : v))
+    .optional();
+
 // ── Shared ────────────────────────────────────────────────────────────────────
 
 export const LoreEntityTypeSchema = z.enum([
@@ -42,12 +53,12 @@ export const CharacterAttributesSchema = z.object({
     gender: z.string().optional(),
     affiliation: z.string().optional(),
     role: z.string().optional(),
-    status: z.enum(["alive", "dead", "unknown"]).optional(),
+    status: z.enum(["alive", "dead", "unknown"]).catch("unknown").optional(),
     secrets: z.string().optional(),
     physicalDescription: z.string().optional(),
     personality: z.string().optional(),
     backstory: z.string().optional(),
-    goals: z.string().optional(),
+    goals: coerceToString,
 });
 
 export const LocationAttributesSchema = z.object({
@@ -56,7 +67,7 @@ export const LocationAttributesSchema = z.object({
     population: z.string().optional(),
     ruler: z.string().optional(),
     history: z.string().optional(),
-    notableLandmarks: z.string().optional(),
+    notableLandmarks: coerceToString,
     secrets: z.string().optional(),
     connectedLocations: z.array(z.string()).optional(),
 });
@@ -65,12 +76,12 @@ export const FactionAttributesSchema = z.object({
     factionType: z.string().optional(),
     foundingDate: z.string().optional(),
     leader: z.string().optional(),
-    goals: z.string().optional(),
+    goals: coerceToString,
     members: z.array(z.string()).optional(),
     allies: z.array(z.string()).optional(),
     enemies: z.array(z.string()).optional(),
     secrets: z.string().optional(),
-    hierarchy: z.string().optional(),
+    hierarchy: coerceToString,
 });
 
 const StatblockFieldsSchema = z.object({
@@ -90,7 +101,7 @@ export const CreatureAttributesSchema = StatblockFieldsSchema.extend({
     creatureType: z.string().optional(),
     habitat: z.string().optional(),
     diet: z.string().optional(),
-    abilities: z.string().optional(),
+    abilities: coerceToString,
     lore: z.string().optional(),
     dangerLevel: z.string().optional(),
 });
@@ -100,7 +111,7 @@ export const EventAttributesSchema = z.object({
     participants: z.array(z.string()).optional(),
     location: z.string().optional(),
     outcome: z.string().optional(),
-    consequences: z.string().optional(),
+    consequences: coerceToString,
     secrets: z.string().optional(),
 });
 
@@ -117,67 +128,65 @@ export const ManuscriptAttributesSchema = z.object({
 
 export const StatblockAttributesSchema = StatblockFieldsSchema.extend({
     system: z.string().optional(), // "dnd5e", "pathfinder2e", etc.
-    abilities: z.string().optional(),
-    actions: z.string().optional(),
-    legendaryActions: z.string().optional(),
+    abilities: coerceToString,
+    actions: coerceToString,
+    legendaryActions: coerceToString,
 });
 
 // ── Discriminated union entity schemas ────────────────────────────────────────
 
+// Shared coercions applied to every entity type
+const EntityBaseExtension = {
+    action: z.enum(["create", "update"]).default("create"),
+    existingNoteId: z.string().nullish().transform((v) => v ?? undefined),
+};
+
 export const CharacterEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("character"),
     attributes: CharacterAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const LocationEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("location"),
     attributes: LocationAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const FactionEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("faction"),
     attributes: FactionAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const CreatureEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("creature"),
     attributes: CreatureAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const EventEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("event"),
     attributes: EventAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const TimelineEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("timeline"),
     attributes: TimelineAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const ManuscriptEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("manuscript"),
     attributes: ManuscriptAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const StatblockEntitySchema = BaseLoreEntitySchema.extend({
     type: z.literal("statblock"),
     attributes: StatblockAttributesSchema,
-    action: z.enum(["create", "update"]),
-    existingNoteId: z.string().optional(),
+    ...EntityBaseExtension,
 });
 
 export const LoreEntitySchema = z.discriminatedUnion("type", [
